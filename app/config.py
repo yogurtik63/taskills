@@ -5,5 +5,4 @@ class Configuration(object):
     SECRET_KEY = 'my site its very mega secret!'
 
     SECURITY_PASSWORD_SALT = 'salt'
-    # SECURITY_PASSWORD_HASH = 'plaintext'
     SECURITY_PASSWORD_HASH = 'sha512_crypt'
