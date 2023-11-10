@@ -9,9 +9,12 @@
 		"username": "username",
 		"email": "mail@mail.ru",
 		"password": "hash_of_password",
+		"image": "https://url_of_image.png",
 		"role": "Admin"/"User"
 		}
 	- В качестве роли указать одну из строк ("Admin", либо "User")
+	- image - фото профиля пользователя
+	- При отсутствии изображения, указать в поле image пустую строку 
 	
 	
 	https://#####/user/<username> - GET запрос
@@ -21,7 +24,8 @@
         "username": "username",
 		"email": "mail@mail.ru",
 		"password": "hash_of_password",
-		"role": "Admin"/"User"
+		"role": "Admin"/"User"б
+		"image": "https://url_of_image.png",
 		"count": 0
     }
 	- count - количество посещений мероприятий этим пользователем
@@ -143,3 +147,51 @@
 	
 	https://#####/point/<id> - DELETE запрос
 	- Удаление точки №id
+	
+	
+	https://#####/event - POST запрос
+	- Создание нового мероприятия
+	Принимает JSON формата:
+	event = {
+		"title": "title",
+		"description": "description",
+		"image": "https://url_of_image.png"
+		"date": [year, month, day, hour, minute]
+	}
+	- При отсутствии изображения, указать в поле image пустую строку
+	- Поле date - список чисел
+	
+	
+	https://#####/event/<time> - GET запрос
+	- Параметр time принимает значения: "past", "future", id
+	Возвращает JSON формата:
+	 - Если указан time = "past" (все мероприятия) или time = "future" (мероприятия, которые ещё не прошли)
+	result = {
+		"events": [
+			{
+				"title": "title_1",
+				"description": "description_1",
+				"image": "https://url_of_image.png",
+				"date": [year, month, day, hour, minute]
+			},
+			{
+				"title": "title_2",
+				"description": "description_2",
+				"image": "https://url_of_image.png",
+				"date": [year, month, day, hour, minute]
+			},
+			...
+		]
+	}
+	 - Если указан time как число - id определенного мероприятия:
+	event = {
+		"title": "title",
+		"description": "description",
+		"image": "https://url_of_image.png"
+		"date": [year, month, day, hour, minute]
+	}
+	
+	
+	https://#####/event/<id> - DELETE запрос
+	- Удаление мероприятия №id
+	

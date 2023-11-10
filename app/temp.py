@@ -1,4 +1,5 @@
-from models import UserRole
+from datetime import datetime
 
-s = {"points": []}
-print("points" in s)
+n = datetime.now()
+
+print(n)

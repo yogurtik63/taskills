@@ -24,6 +24,7 @@ def new_user():
                 email=request.json['email'],
                 password=request.json['password'],
                 role=UserRole[request.json['role']],
+                image=request.json['image'],
                 count=0)
 
     db.session.add(user)
@@ -41,6 +42,7 @@ def get_user(username):
         'email': user.email,
         'password': user.password,
         'role': user.role.value,
+        'image': user.image,
         'count': user.count
     }
 
@@ -55,7 +57,7 @@ def new_route():
     route = Route(
         title=request.json['title'],
         description=request.json['description'],
-        image=(request.json['image'] if request.json['image'] != '' else ''),
+        image=request.json['image'],
         edge_1=f"{request.json['edge_1'][0]} {request.json['edge_1'][1]}",
         edge_2=f"{request.json['edge_2'][0]} {request.json['edge_2'][1]}"
     )
@@ -114,7 +116,7 @@ def new_point():
             m_point = Point(
                 title=m_point['title'],
                 description=m_point['description'],
-                image=(m_point['image'] if m_point['image'] != '' else ''),
+                image=m_point['image'],
                 location=f"{m_point['location'][0]} {m_point['location'][1]}",
                 route_id=request.json['route_id']
             )
@@ -125,7 +127,7 @@ def new_point():
         point = Point(
             title=request.json['title'],
             description=request.json['description'],
-            image=(request.json['image'] if request.json['image'] != '' else ''),
+            image=request.json['image'],
             location=f"{request.json['location'][0]} {request.json['location'][1]}",
             route_id=request.json['route_id']
         )
@@ -155,6 +157,54 @@ def get_point(id):
 def delete_point(id):
     id = int(id)
     db.session.query(Point).filter_by(id=id).delete()
+
+    db.session.commit()
+
+    return make_response(jsonify({'Response': 'Successful'}), 200)
+
+
+@app.route('/event/<time>', methods=['GET'])
+def get_events(time):
+    if time.isdigit():
+        result = db.session.query(Event).filter(id=id).first()
+    else:
+        if time == 'future':
+            events = db.session.query(Event).filter(Event.date > datetime.now()).all()
+        elif time == 'past':
+            events = db.session.query(Event).filter(Event.date < datetime.now()).all()
+        else:
+            abort(400)
+
+        result = {'events': [{'id': event.id, 'title': event.title, 'description': event.description, 'date': event.date} for event in events]}
+
+    return jsonify(result)
+
+# {
+# 	"title": "Бородинское сражение",
+#   	"description": "Реконструкция Бородинского сражения, произошедшего в 1812 году, бубубу...",
+#   	"date": [2023, 11, 30, 12, 49]
+# }
+
+@app.route('/event', methods=['POST'])
+def new_event():
+    if not request.json:
+        abort(400)
+
+    event = Event(title=request.json['title'],
+                description=request.json['description'],
+                image=request.json['image'],
+                date=datetime(*request.json['date']))
+
+    db.session.add(event)
+    db.session.commit()
+
+    return make_response(jsonify({'Response': 'Successful'}), 200)
+
+
+@app.route('/event/<id>', methods=['DELETE'])
+def delete_event(id):
+    id = int(id)
+    db.session.query(Event).filter_by(id=id).delete()
 
     db.session.commit()
 
