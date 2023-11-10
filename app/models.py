@@ -30,8 +30,8 @@ class Route(db.Model):
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text(), nullable=False)
     image = db.Column(db.String(255), nullable=True)
-    edge_1 = db.Column(db.String(255))
-    edge_2 = db.Column(db.String(255))
+    edge_1 = db.Column(db.String(128))
+    edge_2 = db.Column(db.String(128))
 
     points = db.relationship('Point', backref='route')
 
@@ -46,8 +46,8 @@ class Point(db.Model):
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255), nullable=False)
     image = db.Column(db.String(255), nullable=True)
-    point_x = db.Column(DECIMAL(9, 6), nullable=False)
-    point_y = db.Column(DECIMAL(9, 6), nullable=False)
+    point_x = db.Column(db.String(50), nullable=False)
+    point_y = db.Column(db.String(50), nullable=False)
     route_id = db.Column(db.Integer(), db.ForeignKey('routes.id'))
 
     def __repr__(self):

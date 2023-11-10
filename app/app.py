@@ -40,7 +40,7 @@ def get_user(username):
         'username': user.username,
         'email': user.email,
         'password': user.password,
-        'role': user.role,
+        'role': user.role.value,
         'count': user.count
     }
 
@@ -56,8 +56,8 @@ def new_route():
         title=request.json['title'],
         description=request.json['description'],
         image=(request.json['image'] if request.json['image'] != '' else ''),
-        edge_1=f"{request.json['edge_1'][0]} {request.json['edge_1'][1]}",
-        edge_2=f"{request.json['edge_2'][0]} {request.json['edge_2'][1]}"
+        edge_1=request.json['edge_1'],
+        edge_2=request.json['edge_2']
     )
 
     db.session.add(route)
@@ -68,15 +68,15 @@ def new_route():
 
 @app.route('/route/<id>', methods=['GET'])
 def get_route(id):
-    if id != 0:
+    if id != '0':
         route = db.session.query(Route).filter_by(id=id).first()
 
         result = {
             'title': route.title,
             'description': route.description,
             'image': route.image,
-            'edge_1': list(map(int, route.edge_1.split())),
-            'edge_2': list(map(int, route.edge_2.split()))
+            'edge_1': list(map(int, route.edge_1.split(' '))),
+            'edge_2': list(map(int, route.edge_2.split(' ')))
         }
     else:
         routes = db.session.query(Route).all()
@@ -86,18 +86,17 @@ def get_route(id):
                         'title': m_route.title,
                         'description': m_route.description,
                         'image': m_route.image,
-                        'edge_1': list(map(int, m_route.edge_1.split())),
-                        'edge_2': list(map(int, m_route.edge_2.split()))} for m_route in routes]}
+                        'edge_1': list(map(float, m_route.edge_1.split())),
+                        'edge_2': list(map(float, m_route.edge_2.split()))} for m_route in routes]}
 
     return jsonify(result)
 
 
 @app.route('/route/<id>', methods=['DELETE'])
 def delete_route(id):
-    points = db.session.query(Point).filter_by(route_id=id).all()
-    route = db.session.query(Point).filter_by(id=id).first()
-    db.session.delete(points)
-    db.session.delete(route)
+    id = int(id)
+    db.session.query(Point).filter_by(route_id=id).delete()
+    db.session.query(Route).filter_by(id=id).delete()
 
     db.session.commit()
 
@@ -114,7 +113,8 @@ def new_point():
         description=request.json['description'],
         image=(request.json['image'] if request.json['image'] != '' else ''),
         point_x=request.json['point_x'],
-        point_y=request.json['point_y']
+        point_y=request.json['point_y'],
+        route_id=request.json['parent_route']
     )
 
     db.session.add(point)
@@ -125,7 +125,8 @@ def new_point():
 
 @app.route('/point/<id>', methods=['GET'])
 def get_point(id):
-    points = db.session.query(Route).filter_by(route_id=id).first()
+    id = int(id)
+    points = db.session.query(Point).filter_by(route_id=id).all()
 
     result = {
         'points': [{'id': m_point.id,
@@ -136,6 +137,16 @@ def get_point(id):
                     'point_y': m_point.point_y} for m_point in points]}
 
     return jsonify(result)
+
+
+@app.route('/point/<id>', methods=['DELETE'])
+def delete_point(id):
+    id = int(id)
+    db.session.query(Point).filter_by(id=id).delete()
+
+    db.session.commit()
+
+    return make_response(jsonify({'Response': 'Successful'}), 200)
 
 
 if __name__ == '__main__':
