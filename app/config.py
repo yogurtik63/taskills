@@ -1,5 +1,5 @@
 class Configuration(object):
-    DEBUG = True
+    DEBUG = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:Parol_999@localhost/istoki_api?charset=utf8'
     SECRET_KEY = 'my site its very mega secret!'

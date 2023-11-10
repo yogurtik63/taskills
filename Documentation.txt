@@ -62,16 +62,16 @@
 				"title": "title_1",
 				"description": "description_1",
 				"image": "https://url_of_image.png",
-				"edge_1": "x1, y1",
-				"edge_2": "x2, y2"
+				"edge_1": [x1, y1],
+				"edge_2": [x2, y2]
 			},
 			{
 				"id": "id_2",
 				"title": "title_2",
 				"description": "description_2",
 				"image": "https://url_of_image.png",
-				"edge_1": "x1, y1",
-				"edge_2": "x2, y2"
+				"edge_1": [x1, y1],
+				"edge_2": [x2, y2]
 			},
 			...
 		]
@@ -83,13 +83,33 @@
 	
 	
 	https://#####/point - POST запрос
-	- Создание новой точки
+	- Создание новой точки/множества точек
 	Принимает JSON формата:
+	 - Чтобы создать одну точку:
 	route = {
 		"title": "title",
 		"description": "description",
 		"image": "https://url_of_image.png",
 		"location": [x, y],
+		"route_id": 0
+	}
+	 - Чтобы создать множество точек:
+	request = {
+		"points": [
+			{
+				"title": "title_1",
+				"description": "description_1",
+				"image": "https://url_of_image.png",
+				"location": [x, y]
+			},
+			{
+				"title": "title_2",
+				"description": "description_2",
+				"image": "https://url_of_image.png",
+				"location": [x, y]
+			},
+			...
+		],
 		"route_id": 0
 	}
 	- x, y - широта и долгота в формате float
@@ -106,14 +126,14 @@
 				"title": "title_1",
 				"description": "description_1",
 				"image": "https://url_of_image.png",
-				"location": "x, y"
+				"location": [x, y]
 			},
 			{
 				"id": "id_2",
 				"title": "title_2",
 				"description": "description_2",
 				"image": "https://url_of_image.png",
-				"location": "x, y"
+				"location": [x, y]
 			},
 			...
 		]

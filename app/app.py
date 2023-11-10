@@ -68,7 +68,8 @@ def new_route():
 
 @app.route('/route/<id>', methods=['GET'])
 def get_route(id):
-    if id != '0':
+    id = int(id)
+    if id > 0:
         route = db.session.query(Route).filter_by(id=id).first()
 
         result = {
@@ -108,16 +109,29 @@ def new_point():
     if not request.json:
         abort(400)
 
-    point = Point(
-        title=request.json['title'],
-        description=request.json['description'],
-        image=(request.json['image'] if request.json['image'] != '' else ''),
-        location=f"{request.json.location[0]} {request.json.location[1]}",
-        route_id=request.json['parent_route']
-    )
+    if "points" in request.json:
+        for m_point in request.json['points']:
+            m_point = Point(
+                title=m_point['title'],
+                description=m_point['description'],
+                image=(m_point['image'] if m_point['image'] != '' else ''),
+                location=f"{m_point['location'][0]} {m_point['location'][1]}",
+                route_id=request.json['route_id']
+            )
 
-    db.session.add(point)
-    db.session.commit()
+            db.session.add(m_point)
+            db.session.commit()
+    else:
+        point = Point(
+            title=request.json['title'],
+            description=request.json['description'],
+            image=(request.json['image'] if request.json['image'] != '' else ''),
+            location=f"{request.json['location'][0]} {request.json['location'][1]}",
+            route_id=request.json['route_id']
+        )
+
+        db.session.add(point)
+        db.session.commit()
 
     return make_response(jsonify({'Response': 'Successful'}), 200)
 
@@ -156,4 +170,4 @@ if __name__ == '__main__':
     #
     #     db.create_all()
 
-    app.run(debug=True)
+    app.run(debug=False)
