@@ -1,5 +1,4 @@
 from flask import Flask, make_response, jsonify, request, abort
-from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
 from config import *
@@ -8,14 +7,7 @@ app = Flask(__name__)
 app.config.from_object(Configuration)
 app.config['JSON_AS_ASCII'] = False
 
-db = SQLAlchemy(app)
-# with app.app_context():
-#     from models import *
-#     db.create_all()
-
-migrate = Migrate(app, db)
-
-from models import *
+db = SQLAlchemy()
 
 
 @app.errorhandler(404)
@@ -29,9 +21,10 @@ def new_user():
         abort(400)
 
     user = User(username=request.json['username'],
-                name=request.json['name'],
                 email=request.json['email'],
-                password=request.json['password'])
+                password=request.json['password'],
+                role=UserRole[request.json['role']],
+                count=0)
 
     db.session.add(user)
     db.session.commit()
@@ -45,7 +38,6 @@ def get_user(username):
 
     result = {
         'username': user.username,
-        'name': user.name,
         'email': user.email,
         'password': user.password,
         'role': user.role,
@@ -62,4 +54,10 @@ def get_user(username):
 
 
 if __name__ == '__main__':
+    db.init_app(app)
+    with app.app_context():
+        from models import *
+
+        db.create_all()
+
     app.run(debug=True)
