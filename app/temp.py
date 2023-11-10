@@ -1,5 +1,5 @@
 from datetime import datetime
 
-n = datetime.now()
-
+s = '2023 11 11'
+n = datetime(*list(map(int, s.split())))
 print(n)

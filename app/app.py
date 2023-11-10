@@ -1,6 +1,7 @@
+import sqlalchemy
 from flask import Flask, make_response, jsonify, request, abort
 from flask_sqlalchemy import SQLAlchemy
-
+from utils import *
 from config import *
 
 app = Flask(__name__)
@@ -38,6 +39,7 @@ def get_user(username):
     user = db.session.query(User).filter_by(username=username).first()
 
     result = {
+        'id': user.id,
         'username': user.username,
         'email': user.email,
         'password': user.password,
@@ -75,6 +77,7 @@ def get_route(id):
         route = db.session.query(Route).filter_by(id=id).first()
 
         result = {
+            'id': route.id,
             'title': route.title,
             'description': route.description,
             'image': route.image,
@@ -163,28 +166,6 @@ def delete_point(id):
     return make_response(jsonify({'Response': 'Successful'}), 200)
 
 
-@app.route('/event/<time>', methods=['GET'])
-def get_events(time):
-    if time.isdigit():
-        result = db.session.query(Event).filter(id=id).first()
-    else:
-        if time == 'future':
-            events = db.session.query(Event).filter(Event.date > datetime.now()).all()
-        elif time == 'past':
-            events = db.session.query(Event).filter(Event.date < datetime.now()).all()
-        else:
-            abort(400)
-
-        result = {'events': [{'id': event.id, 'title': event.title, 'description': event.description, 'date': event.date} for event in events]}
-
-    return jsonify(result)
-
-# {
-# 	"title": "Бородинское сражение",
-#   	"description": "Реконструкция Бородинского сражения, произошедшего в 1812 году, бубубу...",
-#   	"date": [2023, 11, 30, 12, 49]
-# }
-
 @app.route('/event', methods=['POST'])
 def new_event():
     if not request.json:
@@ -199,6 +180,40 @@ def new_event():
     db.session.commit()
 
     return make_response(jsonify({'Response': 'Successful'}), 200)
+
+
+@app.route('/event/<time>', methods=['GET'])
+def get_events(time):
+    if time.isdigit():
+        time = int(time)
+        event = db.session.query(Event).filter_by(id=time).first()
+
+        result = {
+            'id': event.id,
+            'title': event.title,
+            'description': event.description,
+            'image': event.image,
+            'date': event.date
+        }
+    else:
+        if time == 'future':
+            events = db.session.query(Event).filter(Event.date > datetime.now()).all()
+        elif time == 'past':
+            events = db.session.query(Event).filter(Event.date < datetime.now()).all()
+        elif time == 'all':
+            events = db.session.query(Event).all()
+        elif len(time.split()) == 3:
+            m_date = datetime(*list(map(int, time.split())))
+            events = db.session.query(Event).filter(
+                sqlalchemy.func.extract('year', Event.date) == m_date.year,
+                sqlalchemy.func.extract('month', Event.date) == m_date.month,
+                sqlalchemy.func.extract('day', Event.date) == m_date.day).all()
+        else:
+            abort(400)
+
+        result = {'events': [{'id': event.id, 'title': event.title, 'description': event.description, 'date': event.date} for event in events]}
+
+    return jsonify(result)
 
 
 @app.route('/event/<id>', methods=['DELETE'])
