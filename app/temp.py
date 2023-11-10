@@ -1,4 +1,5 @@
 from models import UserRole
 
-print(UserRole.Admin.value)
-print(UserRole["Admin"])
+s = "123 123"
+m = s.split()
+print(list(map(int,m)))

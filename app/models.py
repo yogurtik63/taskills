@@ -1,3 +1,5 @@
+from sqlalchemy.dialects.mysql import DECIMAL
+
 from app import db
 import enum
 
@@ -23,12 +25,30 @@ class User(db.Model):
 
 class Route(db.Model):
     __tablename__ = 'routes'
+
     id = db.Column(db.Integer(), primary_key=True)
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text(), nullable=False)
     image = db.Column(db.String(255), nullable=True)
+    edge_1 = db.Column(db.String(255))
+    edge_2 = db.Column(db.String(255))
 
     points = db.relationship('Point', backref='route')
+
+    def __repr__(self):
+        return "<{}:{}>".format(self.id, self.title[:10])
+
+
+class Point(db.Model):
+    __tablename__ = 'points'
+
+    id = db.Column(db.Integer(), primary_key=True)
+    title = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.String(255), nullable=False)
+    image = db.Column(db.String(255), nullable=True)
+    point_x = db.Column(DECIMAL(9, 6), nullable=False)
+    point_y = db.Column(DECIMAL(9, 6), nullable=False)
+    route_id = db.Column(db.Integer(), db.ForeignKey('routes.id'))
 
     def __repr__(self):
         return "<{}:{}>".format(self.id, self.title[:10])
