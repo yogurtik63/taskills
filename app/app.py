@@ -56,8 +56,8 @@ def new_route():
         title=request.json['title'],
         description=request.json['description'],
         image=(request.json['image'] if request.json['image'] != '' else ''),
-        edge_1=request.json['edge_1'],
-        edge_2=request.json['edge_2']
+        edge_1=f"{request.json['edge_1'][0]} {request.json['edge_1'][1]}",
+        edge_2=f"{request.json['edge_2'][0]} {request.json['edge_2'][1]}"
     )
 
     db.session.add(route)
@@ -112,8 +112,7 @@ def new_point():
         title=request.json['title'],
         description=request.json['description'],
         image=(request.json['image'] if request.json['image'] != '' else ''),
-        point_x=request.json['point_x'],
-        point_y=request.json['point_y'],
+        location=f"{request.json.location[0]} {request.json.location[1]}",
         route_id=request.json['parent_route']
     )
 
@@ -133,8 +132,7 @@ def get_point(id):
                     'title': m_point.title,
                     'description': m_point.description,
                     'image': m_point.image,
-                    'point_x': m_point.point_x,
-                    'point_y': m_point.point_y} for m_point in points]}
+                    'location': list(map(float, m_point.location.split()))} for m_point in points]}
 
     return jsonify(result)
 

@@ -1,0 +1,40 @@
+---------------ДОКУМЕНТАЦИЯ---------------
+
+Таблица User:
+
+	https://#####/user - POST запрос
+	- Создание нового пользователя
+	Принимает JSON формата:
+	user = {
+		"username": "username",
+		"email": "mail@mail.ru",
+		"password": "hash_of_password",
+		"role": "Admin"/"User"
+		}
+	- В качестве роли указать одну из строк ("Admin", либо "User")
+	
+	
+	https://#####/user/<username> - GET запрос
+	- Получение информации о существующем пользователе по его нику
+	Возвращает JSON формата:
+	result = {
+        "username": "username",
+		"email": "mail@mail.ru",
+		"password": "hash_of_password",
+		"role": "Admin"/"User"
+		"count": 0
+    }
+	- count - количество посещений мероприятий этим пользователем
+	
+	
+	https://#####/route - POST запрос
+	- Создание нового маршрута
+	Принимает JSON формата:
+	route = {
+		'title': 'title',
+		'description': 'description',
+		'image': 'https://url_of_image.png',
+		'location': [x, y]
+	}
+	- x, y - широта и долгота в формате float 
+	- При отсутствии изображения, указать в поле image пустую строку 

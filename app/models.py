@@ -46,8 +46,7 @@ class Point(db.Model):
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255), nullable=False)
     image = db.Column(db.String(255), nullable=True)
-    point_x = db.Column(db.String(50), nullable=False)
-    point_y = db.Column(db.String(50), nullable=False)
+    location = db.Column(db.String(128), nullable=False)
     route_id = db.Column(db.Integer(), db.ForeignKey('routes.id'))
 
     def __repr__(self):
