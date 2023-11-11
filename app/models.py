@@ -20,6 +20,7 @@ class User(db.Model):
     password = db.Column(db.String(90), nullable=False)
     role = db.Column(db.Enum(UserRole), nullable=False)
     image = db.Column(db.String(255), nullable=True)
+    level = db.Column(db.Integer())
     count = db.Column(db.Integer())
 
     @staticmethod
@@ -71,6 +72,18 @@ class Event(db.Model):
     description = db.Column(db.Text(), nullable=False)
     image = db.Column(db.String(255), nullable=True)
     date = db.Column(db.DateTime(), default=datetime.now())
+
+    def __repr__(self):
+        return "<{}:{}>".format(self.id, self.title[:10])
+
+
+class Ticket(db.Model):
+    __tablename__ = 'tickets'
+    id = db.Column(db.Integer(), primary_key=True)
+    name = db.Column(db.String(128), nullable=False)
+    reg_date = db.Column(db.DateTime(), default=datetime.now())
+    event_id = db.Column(db.Integer(), db.ForeignKey('events.id'))
+    user_id = db.Column(db.Integer(), db.ForeignKey('users.id'))
 
     def __repr__(self):
         return "<{}:{}>".format(self.id, self.title[:10])

@@ -33,10 +33,11 @@
 	- Получение информации о существующем пользователе по его нику
 	Возвращает JSON формата:
 	result = {
+		"id": 0
         "username": "username",
 		"email": "mail@mail.ru",
 		"password": "hash_of_password",
-		"role": "Admin"/"User"б
+		"role": "Admin"/"User",
 		"image": "https://url_of_image.png",
 		"count": 0
     }
@@ -206,4 +207,41 @@
 	
 	https://#####/event/<id> - DELETE запрос
 	- Удаление мероприятия №id
+	
+	
+	https://#####/ticket - POST запрос
+	- Создание записи на мероприятие
+	Принимает JSON формата:
+	ticket = {
+		"name": "name surname",
+		"reg_date": [year, month, day],
+		"event_id": 0,
+		"user_id": 0
+	}
+	- name - Имя и фамилия записавшегося участника
+	- reg_date - список чисел, дата записи
+	- event_id - число id мероприятия
+	- user_id - число id человека, оформившего билет
+	
+	
+	https://#####/ticket/<id> - GET запрос
+	- Получение билетов на мероприятие id
+	Возвращает JSON формата:
+	result = {
+		"tickets": [
+			{
+				"name": "name surname 1",
+				"reg_date": [year, month, day],
+				"event_id": 0,
+				"user_id": 1
+			},
+			{
+				"name": "name surname 2",
+				"reg_date": [year, month, day],
+				"event_id": 0,
+				"user_id": 1
+			},
+			...
+		]
+	}
 	

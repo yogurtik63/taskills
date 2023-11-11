@@ -2,13 +2,10 @@ import sqlalchemy
 from flask import Flask, make_response, jsonify, request, abort
 from flask_sqlalchemy import SQLAlchemy
 from config import *
-from flask_jwt_extended import JWTManager
-# from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
 
 app = Flask(__name__)
 app.config.from_object(Configuration)
 app.config['JSON_AS_ASCII'] = False
-jwt = JWTManager(app)
 
 db = SQLAlchemy()
 
@@ -18,10 +15,20 @@ def not_found(error):
     return make_response(jsonify({'error': 'Not found'}), 404)
 
 
+def fields_checking(json, params: list):
+    for param in params:
+        if param not in json:
+            return param
+
+
 @app.route('/user', methods=['POST'])
 def new_user():
     if not request.json:
         abort(400)
+
+    errors = fields_checking(request.json, ['username', 'email', 'password', 'role', 'image'])
+    if errors:
+        return make_response(jsonify({'Error': f'Missing {errors} field'}), 400)
 
     if db.session.query(User).filter_by(username=request.json['username']).first() is not None:
         return make_response(jsonify({'Error': 'This user exist already'}), 400)
@@ -33,6 +40,7 @@ def new_user():
                     password=User.generate_hash(request.json['password']),
                     role=UserRole[request.json['role']],
                     image=request.json['image'],
+                    level=0,
                     count=0)
 
         db.session.add(user)
@@ -45,6 +53,10 @@ def new_user():
 def login_user():
     if not request.json:
         abort(400)
+
+    errors = fields_checking(request.json, ['username',  'password'])
+    if errors:
+        return make_response(jsonify({'Error': f'Missing {errors} field'}), 400)
 
     user = db.session.query(User).filter_by(username=request.json['username']).first()
 
@@ -88,6 +100,7 @@ def get_user(username):
             'password': user.password,
             'role': user.role.value,
             'image': user.image,
+            'level': user.level,
             'count': user.count
         }
 
@@ -98,6 +111,10 @@ def get_user(username):
 def new_route():
     if not request.json:
         abort(400)
+
+    errors = fields_checking(request.json, ['title', 'description', 'image', 'edge_1', 'edge_2'])
+    if errors:
+        return make_response(jsonify({'Error': f'Missing {errors} field'}), 400)
 
     route = Route(
         title=request.json['title'],
@@ -165,6 +182,10 @@ def new_point():
 
     if "points" in request.json:
         for m_point in request.json['points']:
+            errors = fields_checking(request.json, ['title', 'description', 'image', 'location', 'route_id'])
+            if errors:
+                return make_response(jsonify({'Error': f'Missing {errors} field'}), 400)
+
             m_point = Point(
                 title=m_point['title'],
                 description=m_point['description'],
@@ -176,6 +197,10 @@ def new_point():
             db.session.add(m_point)
             db.session.commit()
     else:
+        errors = fields_checking(request.json, ['title', 'description', 'image', 'location', 'route_id'])
+        if errors:
+            return make_response(jsonify({'Error': f'Missing {errors} field'}), 400)
+
         point = Point(
             title=request.json['title'],
             description=request.json['description'],
@@ -222,6 +247,10 @@ def delete_point(id):
 def new_event():
     if not request.json:
         abort(400)
+
+    errors = fields_checking(request.json, ['title', 'description', 'image', 'date'])
+    if errors:
+        return make_response(jsonify({'Error': f'Missing {errors} field'}), 400)
 
     event = Event(title=request.json['title'],
                 description=request.json['description'],
@@ -281,6 +310,42 @@ def delete_event(id):
     db.session.commit()
 
     return make_response(jsonify({'Response': 'Successful'}), 200)
+
+
+@app.route('/ticket', methods=['POST'])
+def new_ticket():
+    if not request.json:
+        abort(400)
+
+    errors = fields_checking(request.json, ['name', 'date', 'event_id', 'user_id'])
+    if errors:
+        return make_response(jsonify({'Error': f'Missing {errors} field'}), 400)
+
+    ticket = Ticket(name=request.json['name'],
+                    reg_date=datetime(*request.json['date']),
+                    event_id=request.json['event_id'],
+                    user_id=datetime(*request.json['user_id']))
+
+    db.session.add(ticket)
+    db.session.commit()
+
+    return make_response(jsonify({'Response': 'Successful'}), 200)
+
+
+@app.route('/ticket/<id>', methods=['GET'])
+def get_ticket(id):
+    if not request.json:
+        abort(400)
+
+    id = int(id)
+
+    tickets = db.session.query(Ticket).filter_by(event_id=id).all()
+    result = {
+        'events': [{'id': ticket.id, 'name': ticket.name, 'reg_date': ticket.reg_date,
+                    'event_id': ticket.event_id, 'user_id': ticket.user_id} for
+                   ticket in tickets]}
+
+    return jsonify(result)
 
 
 if __name__ == '__main__':
