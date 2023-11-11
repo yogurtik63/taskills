@@ -56,7 +56,7 @@ class Point(db.Model):
 
     id = db.Column(db.Integer(), primary_key=True)
     title = db.Column(db.String(255), nullable=False)
-    description = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text(), nullable=False)
     image = db.Column(db.String(255), nullable=True)
     location = db.Column(db.String(128), nullable=False)
     route_id = db.Column(db.Integer(), db.ForeignKey('routes.id'))

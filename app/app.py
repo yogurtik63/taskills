@@ -61,7 +61,7 @@ def login_user():
     user = db.session.query(User).filter_by(username=request.json['username']).first()
 
     if user is None:
-        return make_response(jsonify({'Error': 'non-existing user'}), 400)
+        return make_response(jsonify({'Error': 'Non-existing user'}), 400)
     else:
         if User.verify_hash(request.json['password'], user.password):
             return make_response(jsonify({'Response': 'Successful login'}), 200)
