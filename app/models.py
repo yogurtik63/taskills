@@ -1,5 +1,5 @@
 from datetime import datetime
-
+from passlib.hash import pbkdf2_sha256 as sha256
 from sqlalchemy.dialects.mysql import DECIMAL
 
 from app import db
@@ -21,6 +21,14 @@ class User(db.Model):
     role = db.Column(db.Enum(UserRole), nullable=False)
     image = db.Column(db.String(255), nullable=True)
     count = db.Column(db.Integer())
+
+    @staticmethod
+    def generate_hash(password):
+        return sha256.hash(password)
+
+    @staticmethod
+    def verify_hash(password, hash):
+        return sha256.verify(password, hash)
 
     def __repr__(self):
         return "<{}:{}>".format(self.id,  self.username)

@@ -1,12 +1,14 @@
 import sqlalchemy
 from flask import Flask, make_response, jsonify, request, abort
 from flask_sqlalchemy import SQLAlchemy
-from utils import *
 from config import *
+from flask_jwt_extended import JWTManager
+# from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
 
 app = Flask(__name__)
 app.config.from_object(Configuration)
 app.config['JSON_AS_ASCII'] = False
+jwt = JWTManager(app)
 
 db = SQLAlchemy()
 
@@ -21,34 +23,75 @@ def new_user():
     if not request.json:
         abort(400)
 
-    user = User(username=request.json['username'],
-                email=request.json['email'],
-                password=request.json['password'],
-                role=UserRole[request.json['role']],
-                image=request.json['image'],
-                count=0)
+    if db.session.query(User).filter_by(username=request.json['username']).first() is not None:
+        return make_response(jsonify({'Error': 'This user exist already'}), 400)
+    elif db.session.query(User).filter_by(username=request.json['email']).first() is not None:
+        return make_response(jsonify({'Error': 'This email is taken already'}), 400)
+    else:
+        user = User(username=request.json['username'],
+                    email=request.json['email'],
+                    password=User.generate_hash(request.json['password']),
+                    role=UserRole[request.json['role']],
+                    image=request.json['image'],
+                    count=0)
 
-    db.session.add(user)
-    db.session.commit()
+        db.session.add(user)
+        db.session.commit()
 
-    return make_response(jsonify({'Response': 'Successful'}), 200)
+        return make_response(jsonify({'Response': 'Successful'}), 200)
+
+
+@app.route('/user/login', methods=['POST'])
+def login_user():
+    if not request.json:
+        abort(400)
+
+    user = db.session.query(User).filter_by(username=request.json['username']).first()
+
+    if user is None:
+        return make_response(jsonify({'Error': 'non-existing user'}), 400)
+    else:
+        if User.verify_hash(request.json['password'], user.password):
+            return make_response(jsonify({'Response': 'Successful login'}), 200)
+        else:
+            return make_response(jsonify({'Response': 'Wrong password'}), 400)
+
+
+@app.route('/user/<username>', methods=['PATCH'])
+def change_user(username):
+    if not request.json:
+        abort(400)
+
+    user = db.session.query(User).filter_by(username=username).first()
+
+    if user is None:
+        return make_response(jsonify({'Error': 'non-existing user'}), 400)
+    else:
+        if 'image' in request.json:
+            user.image = request.json['image']
+            db.session.commit()
+
+            return make_response(jsonify({'Response': 'Successful'}), 200)
 
 
 @app.route('/user/<username>', methods=['GET'])
 def get_user(username):
     user = db.session.query(User).filter_by(username=username).first()
 
-    result = {
-        'id': user.id,
-        'username': user.username,
-        'email': user.email,
-        'password': user.password,
-        'role': user.role.value,
-        'image': user.image,
-        'count': user.count
-    }
+    if user is None:
+        return make_response(jsonify({'Error': 'non-existing user'}), 400)
+    else:
+        result = {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'password': user.password,
+            'role': user.role.value,
+            'image': user.image,
+            'count': user.count
+        }
 
-    return jsonify(result)
+        return jsonify(result)
 
 
 @app.route('/route', methods=['POST'])
@@ -76,24 +119,30 @@ def get_route(id):
     if id > 0:
         route = db.session.query(Route).filter_by(id=id).first()
 
-        result = {
-            'id': route.id,
-            'title': route.title,
-            'description': route.description,
-            'image': route.image,
-            'edge_1': list(map(int, route.edge_1.split(' '))),
-            'edge_2': list(map(int, route.edge_2.split(' ')))
+        if route is None:
+            return make_response(jsonify({'Error': 'non-existing route'}), 400)
+        else:
+            result = {
+                'id': route.id,
+                'title': route.title,
+                'description': route.description,
+                'image': route.image,
+                'edge_1': list(map(int, route.edge_1.split(' '))),
+                'edge_2': list(map(int, route.edge_2.split(' ')))
         }
     else:
         routes = db.session.query(Route).all()
 
-        result = {
-            'routes': [{'id': m_route.id,
-                        'title': m_route.title,
-                        'description': m_route.description,
-                        'image': m_route.image,
-                        'edge_1': list(map(float, m_route.edge_1.split())),
-                        'edge_2': list(map(float, m_route.edge_2.split()))} for m_route in routes]}
+        if routes is None:
+            return make_response(jsonify({'Error': 'non-existing routes'}), 400)
+        else:
+            result = {
+                'routes': [{'id': m_route.id,
+                            'title': m_route.title,
+                            'description': m_route.description,
+                            'image': m_route.image,
+                            'edge_1': list(map(float, m_route.edge_1.split())),
+                            'edge_2': list(map(float, m_route.edge_2.split()))} for m_route in routes]}
 
     return jsonify(result)
 
@@ -146,14 +195,17 @@ def get_point(id):
     id = int(id)
     points = db.session.query(Point).filter_by(route_id=id).all()
 
-    result = {
-        'points': [{'id': m_point.id,
-                    'title': m_point.title,
-                    'description': m_point.description,
-                    'image': m_point.image,
-                    'location': list(map(float, m_point.location.split()))} for m_point in points]}
+    if points is None:
+        return make_response(jsonify({'Error': 'non-existing points'}), 400)
+    else:
+        result = {
+            'points': [{'id': m_point.id,
+                        'title': m_point.title,
+                        'description': m_point.description,
+                        'image': m_point.image,
+                        'location': list(map(float, m_point.location.split()))} for m_point in points]}
 
-    return jsonify(result)
+        return jsonify(result)
 
 
 @app.route('/point/<id>', methods=['DELETE'])
@@ -188,13 +240,16 @@ def get_events(time):
         time = int(time)
         event = db.session.query(Event).filter_by(id=time).first()
 
-        result = {
-            'id': event.id,
-            'title': event.title,
-            'description': event.description,
-            'image': event.image,
-            'date': event.date
-        }
+        if event is None:
+            return make_response(jsonify({'Error': 'non-existing event'}), 400)
+        else:
+            result = {
+                'id': event.id,
+                'title': event.title,
+                'description': event.description,
+                'image': event.image,
+                'date': event.date
+            }
     else:
         if time == 'future':
             events = db.session.query(Event).filter(Event.date > datetime.now()).all()
@@ -209,9 +264,11 @@ def get_events(time):
                 sqlalchemy.func.extract('month', Event.date) == m_date.month,
                 sqlalchemy.func.extract('day', Event.date) == m_date.day).all()
         else:
-            abort(400)
-
-        result = {'events': [{'id': event.id, 'title': event.title, 'description': event.description, 'date': event.date} for event in events]}
+            return make_response(jsonify({'Error': 'Wrong request'}), 400)
+        if events is None:
+            return make_response(jsonify({'Error': 'non-existing event'}), 400)
+        else:
+            result = {'events': [{'id': event.id, 'title': event.title, 'description': event.description, 'date': event.date} for event in events]}
 
     return jsonify(result)
 
