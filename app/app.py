@@ -40,7 +40,7 @@ def new_user():
                     password=User.generate_hash(request.json['password']),
                     role=UserRole[request.json['role']],
                     image=request.json['image'],
-                    level=0,
+                    level=1,
                     count=0)
 
         db.session.add(user)
@@ -182,9 +182,9 @@ def new_point():
 
     if "points" in request.json:
         for m_point in request.json['points']:
-            errors = fields_checking(request.json, ['title', 'description', 'image', 'location', 'route_id'])
-            if errors:
-                return make_response(jsonify({'Error': f'Missing {errors} field'}), 400)
+            # errors = fields_checking(request.json['points'], ['title', 'description', 'image', 'location', 'route_id'])
+            # if errors:
+            #     return make_response(jsonify({'Error': f'Missing {errors} field'}), 400)
 
             m_point = Point(
                 title=m_point['title'],
@@ -197,9 +197,9 @@ def new_point():
             db.session.add(m_point)
             db.session.commit()
     else:
-        errors = fields_checking(request.json, ['title', 'description', 'image', 'location', 'route_id'])
-        if errors:
-            return make_response(jsonify({'Error': f'Missing {errors} field'}), 400)
+        # errors = fields_checking(request.json, ['title', 'description', 'image', 'location', 'route_id'])
+        # if errors:
+        #     return make_response(jsonify({'Error': f'Missing {errors} field'}), 400)
 
         point = Point(
             title=request.json['title'],
@@ -218,7 +218,11 @@ def new_point():
 @app.route('/point/<id>', methods=['GET'])
 def get_point(id):
     id = int(id)
-    points = db.session.query(Point).filter_by(route_id=id).all()
+
+    if id == 0:
+        points = db.session.query(Point).all()
+    else:
+        points = db.session.query(Point).filter_by(route_id=id).all()
 
     if points is None:
         return make_response(jsonify({'Error': 'non-existing points'}), 400)
@@ -260,7 +264,8 @@ def new_event():
     db.session.add(event)
     db.session.commit()
 
-    return make_response(jsonify({'Response': 'Successful'}), 200)
+    return make_response(jsonify({'Response': 'Successful',
+                                        'Regisrtated id': 0}), 200)
 
 
 @app.route('/event/<time>', methods=['GET'])
@@ -317,14 +322,14 @@ def new_ticket():
     if not request.json:
         abort(400)
 
-    errors = fields_checking(request.json, ['name', 'date', 'event_id', 'user_id'])
+    errors = fields_checking(request.json, ['name', 'reg_date', 'event_id', 'user_id'])
     if errors:
         return make_response(jsonify({'Error': f'Missing {errors} field'}), 400)
 
     ticket = Ticket(name=request.json['name'],
-                    reg_date=datetime(*request.json['date']),
+                    reg_date=datetime(*request.json['reg_date']),
                     event_id=request.json['event_id'],
-                    user_id=datetime(*request.json['user_id']))
+                    user_id=request.json['user_id'])
 
     db.session.add(ticket)
     db.session.commit()
